@@ -16,10 +16,17 @@ export class AnalyzeSchemaUseCase {
       throw new NotFoundError('Database connection not found');
     }
 
-    const prompt = `Given a ${connection.type} database named "${connection.database}" on ${connection.host}:${connection.port}, simulate a schema analysis.
+    const prompt = `Given a ${connection.type} database named "${connection.database}" on ${connection.host}:${connection.port}, simulate a comprehensive business schema analysis.
 
-Generate a realistic list of tables with their columns (name, type, nullable, isPrimaryKey) that a business database might have.
-Return as JSON array: [{ tableName: string, columns: [{ name, type, nullable, isPrimaryKey }], rowCount: number }]`;
+The analysis should include tables typical for a growing enterprise, such as:
+- Sales/Transactions (including foreign keys to customers and products)
+- Customers (with contact info and status)
+- Inventory/Products (with stock levels and categories)
+- Employees/HR (with roles and departments)
+- Financial/Invoices (with dates and amounts)
+
+Generate a realistic list of at least 8 tables with their columns (name, type, nullable, isPrimaryKey).
+Return ONLY a valid JSON array: [{ tableName: string, columns: [{ name, type, nullable, isPrimaryKey }], rowCount: number }]`;
 
     const response = await this.aiProvider.generateText(prompt);
 

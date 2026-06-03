@@ -4,6 +4,7 @@ import cors from 'cors';
 import { config } from './config';
 import { AppError } from './shared/errors';
 import { ResponseHelper } from './shared/response.helper';
+import { HeartbeatService } from './shared/services/heartbeat.service';
 import authRoutes from './modules/auth/infrastructure/auth.routes';
 import memoryRoutes from './modules/memory/infrastructure/memory.routes';
 import agentRoutes from './modules/agents/infrastructure/agent.routes';
@@ -33,6 +34,10 @@ app.use('/api/simulations', simulationRoutes);
 app.use('/api/db-analyzer', dbAnalyzerRoutes);
 app.use('/api/automation', automationRoutes);
 app.use('/api/communication', communicationRoutes);
+
+// Start the Heartbeat system
+const heartbeat = HeartbeatService.getInstance();
+heartbeat.start();
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error(`[Error]: ${err.message}`);

@@ -1,7 +1,9 @@
-node_modules
-# Keep environment variables out of version control
+node_modules/
+dist/
+build/
 .env
-
-/generated/prisma
+*.log
 frontend/dist/
+backend/prisma/generated/
 .planning/
+/home/jules/verification/

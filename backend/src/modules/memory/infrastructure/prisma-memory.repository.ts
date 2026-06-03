@@ -48,7 +48,7 @@ export class PrismaMemoryRepository implements MemoryRepository {
   }
 
   async findByType(userId: string, type: string): Promise<MemoryEntry[]> {
-    const items = await prisma.memoryEntry.findMany({ where: { userId, type }, orderBy: { createdAt: 'desc' } });
+    const items = await prisma.memoryEntry.findMany({ where: { userId, type: type as any }, orderBy: { createdAt: 'desc' } });
     return items.map(this.toDomain);
   }
 

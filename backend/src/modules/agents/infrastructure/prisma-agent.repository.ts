@@ -61,7 +61,7 @@ export class PrismaAgentRepository implements AgentRepository {
   }
 
   async findByType(userId: string, type: string): Promise<Agent[]> {
-    const items = await prisma.agent.findMany({ where: { userId, type }, orderBy: { createdAt: 'desc' } });
+    const items = await prisma.agent.findMany({ where: { userId, type: type as any }, orderBy: { createdAt: 'desc' } });
     return items.map(this.toDomain);
   }
 
