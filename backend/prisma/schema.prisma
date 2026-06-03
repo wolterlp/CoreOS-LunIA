@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,260 +10,38 @@ datasource db {
 
 enum Role {
   ADMIN
-  MANAGER
-  FINANCE
-  HR
-  OPERATIONS
-  VIEWER
-}
-
-enum MemoryType {
-  OPERATIONAL
-  STRATEGIC
-  LEARNING
-}
-
-enum AgentType {
-  MARKETING
-  COMMERCIAL
-  FINANCIAL
-  OPERATIONAL
-  COORDINATOR
-}
-
-enum AgentStatus {
-  ACTIVE
-  IDLE
-  ERROR
-  DISABLED
-}
-
-enum TaskStatus {
-  PENDING
-  IN_PROGRESS
-  COMPLETED
-  FAILED
-  CANCELLED
-}
-
-enum AutomationMode {
-  MANUAL
-  SUPERVISED
-  AUTONOMOUS
-}
-
-enum AutomationTrigger {
-  SCHEDULED
-  EVENT
-  THRESHOLD
-}
-
-enum MessageChannel {
-  EMAIL
-  WHATSAPP
-  TELEGRAM
-  SLACK
-  TEAMS
-  SMS
-}
-
-enum MessageDirection {
-  INBOUND
-  OUTBOUND
+  LAWYER
+  CLIENT
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String
-  role      Role     @default(VIEWER)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  name          String
+  role          Role      @default(CLIENT)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
 
-  memories      MemoryEntry[]
-  agents        Agent[]
-  simulations   SimulationScenario[]
-  dbConnections DatabaseConnection[]
-  automationLog AutomationLog[]
-  messages      Message[]
-  conversations Conversation[]
+  // Profile relationship can be added here later
+  profile       Profile?
 
   @@map("users")
 }
 
-model MemoryEntry {
-  id        String     @id @default(uuid())
-  type      MemoryType
-  title     String
-  content   String
-  tags      String[]
-  metadata  Json?
-  userId    String
-  user      User       @relation(fields: [userId], references: [id])
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-
-  @@map("memory_entries")
-}
-
-model Agent {
-  id        String      @id @default(uuid())
-  name      String
-  type      AgentType
-  status    AgentStatus @default(IDLE)
-  config    Json?
-  userId    String
-  user      User        @relation(fields: [userId], references: [id])
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-
-  tasks AgentTask[]
-
-  @@map("agents")
-}
-
-model AgentTask {
-  id          String     @id @default(uuid())
-  title       String
-  description String?
-  status      TaskStatus @default(PENDING)
-  result      Json?
-  agentId     String
-  agent       Agent      @relation(fields: [agentId], references: [id])
-  assignedBy  String
-  createdAt   DateTime   @default(now())
-  completedAt DateTime?
-
-  @@map("agent_tasks")
-}
-
-model SimulationScenario {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  variables   Json
-  results     Json?
-  status      String   @default("DRAFT")
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("simulation_scenarios")
-}
-
-model DatabaseConnection {
-  id         String   @id @default(uuid())
-  name       String
-  type       String
-  host       String
-  port       Int
-  database   String
-  username   String
-  password   String
-  ssl        Boolean  @default(false)
-  isActive   Boolean  @default(true)
-  userId     String
-  user       User     @relation(fields: [userId], references: [id])
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  schemas  TableSchema[]
-  queryLog QueryLog[]
-
-  @@map("database_connections")
-}
-
-model TableSchema {
-  id          String   @id @default(uuid())
-  tableName   String
-  columns     Json
-  rowCount    Int?
-  connectionId String
-  connection  DatabaseConnection @relation(fields: [connectionId], references: [id])
-  analyzedAt  DateTime @default(now())
-
-  @@map("table_schemas")
-}
-
-model QueryLog {
-  id           String   @id @default(uuid())
-  query        String
-  result       Json?
-  tokensUsed   Int?
-  error        String?
-  connectionId String
-  connection   DatabaseConnection @relation(fields: [connectionId], references: [id])
-  userId       String
-  executedAt   DateTime @default(now())
-
-  @@map("query_logs")
-}
-
-model AutomationRule {
-  id          String           @id @default(uuid())
-  name        String
-  description String?
-  trigger     AutomationTrigger
-  mode        AutomationMode   @default(MANUAL)
-  condition   Json?
-  action      Json
-  isActive    Boolean          @default(true)
-  userId      String
-  lastRunAt   DateTime?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-
-  logs AutomationLog[]
-
-  @@map("automation_rules")
-}
-
-model AutomationLog {
+model Profile {
   id        String   @id @default(uuid())
-  action    String
-  status    String
-  result    Json?
-  error     String?
-  ruleId    String
-  rule      AutomationRule @relation(fields: [ruleId], references: [id])
-  userId    String
-  user      User          @relation(fields: [userId], references: [id])
-  executedAt DateTime     @default(now())
-
-  @@map("automation_logs")
-}
-
-model Conversation {
-  id        String   @id @default(uuid())
-  title     String?
-  channel   MessageChannel
-  externalId String?
-  userId    String
+  userId    String   @unique
   user      User     @relation(fields: [userId], references: [id])
+  bio       String?
+  avatarUrl String?
+  phone     String?
+  address   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  messages Message[]
-
-  @@map("conversations")
+  @@map("profiles")
 }
 
-model Message {
-  id          String           @id @default(uuid())
-  content     String
-  direction   MessageDirection
-  channel     MessageChannel
-  status      String           @default("SENT")
-  metadata    Json?
-  conversationId String
-  conversation Conversation   @relation(fields: [conversationId], references: [id])
-  userId      String
-  user        User             @relation(fields: [userId], references: [id])
-  sentAt      DateTime         @default(now())
-
-  @@map("messages")
-}

@@ -48,14 +48,15 @@ export const agentService = {
 };
 
 export const simulationService = {
-  getSimulations: () => api.get('/api/simulations'),
+  getSimulations: () => api.get('/api/simulations/history'),
   createSimulation: (data: any) => api.post('/api/simulations', data),
-  getSimulationById: (id: string) => api.get(`/api/simulations/${id}`),
+  getSimulationById: (id: string) => api.get(`/api/simulations/history`).then((res: any) => res.find((s: any) => s.id === id)),
+  runSimulation: (id: string) => api.post(`/api/simulations/${id}/run`),
 };
 
 export const dbAnalyzerService = {
   getConnections: () => api.get('/api/db-analyzer/connections'),
-  connect: (data: any) => api.post('/api/db-analyzer/connect', data),
+  connect: (data: any) => api.post('/api/db-analyzer/connections', data),
   analyze: (id: string) => api.post(`/api/db-analyzer/connections/${id}/analyze`),
   getSchemas: (id: string) => api.get(`/api/db-analyzer/connections/${id}/schemas`),
   executeQuery: (id: string, data: any) => api.post(`/api/db-analyzer/connections/${id}/query`, data),
@@ -64,13 +65,13 @@ export const dbAnalyzerService = {
 export const automationService = {
   getRules: () => api.get('/api/automation/rules'),
   createRule: (data: any) => api.post('/api/automation/rules', data),
-  getLogs: () => api.get('/api/automation/logs'),
+  getLogs: () => api.get('/api/automation/history'),
 };
 
 export const communicationService = {
   getConversations: () => api.get('/api/communication/conversations'),
   getMessages: (convId: string) => api.get(`/api/communication/conversations/${convId}/messages`),
-  sendMessage: (data: any) => api.post('/api/communication/messages', data),
+  sendMessage: (data: any) => api.post('/api/communication/send', data),
 };
 
 export const authService = {

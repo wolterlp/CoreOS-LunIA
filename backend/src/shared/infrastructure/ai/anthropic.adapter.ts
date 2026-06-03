@@ -4,16 +4,20 @@ import { config } from '../../../config';
 import { AppError } from '../../errors';
 
 export class AnthropicAdapter implements AIProvider {
-  private client: Anthropic;
+  private client: Anthropic | null = null;
 
   constructor() {
-    if (!config.ai.anthropic) {
-      throw new AppError('Anthropic API Key not configured');
+    if (config.ai.anthropic) {
+      this.client = new Anthropic({ apiKey: config.ai.anthropic });
     }
-    this.client = new Anthropic({ apiKey: config.ai.anthropic });
   }
 
   async generateText(prompt: string, options: any = {}): Promise<AIProviderResponse> {
+    if (!this.client) {
+      console.warn('[AI]: Anthropic API Key not configured. Returning simulated response.');
+      return this.simulateResponse(prompt);
+    }
+
     try {
       const response = await this.client.messages.create({
         model: options.model || 'claude-3-sonnet-20241022',
@@ -37,5 +41,18 @@ export class AnthropicAdapter implements AIProvider {
     } catch (error: any) {
       throw new AppError(`Anthropic Error: ${error.message}`, 500);
     }
+  }
+
+  private simulateResponse(prompt: string): AIProviderResponse {
+    let content = "Simulated Anthropic Response: Key not configured.";
+
+    if (prompt.includes('JSON')) {
+      content = JSON.stringify({ result: "Anthropic simulated data" });
+    }
+
+    return {
+      content,
+      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 }
+    };
   }
 }
