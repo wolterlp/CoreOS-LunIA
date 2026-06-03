@@ -57,5 +57,8 @@ La IA funciona como Consejero, Analista, Secretario, Coordinador y Sistema de Mo
 - TailwindCSS
 - Zustand for state management
 
+### Asesoría Económica y Estratégica
+El sistema no solo analiza datos, sino que actúa como un **Mentor Empresarial de alto nivel**. Utiliza marcos de trabajo de grandes corporaciones para guiar el crecimiento de la PyME, analizando Unit Economics, KPIs estratégicos y rutas de madurez empresarial.
+
 ---
 *Este proyecto busca construir el "Sistema Operativo Inteligente para Empresas".*
