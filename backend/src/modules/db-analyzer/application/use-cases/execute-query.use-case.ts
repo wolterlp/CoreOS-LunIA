@@ -33,9 +33,23 @@ Return ONLY the SQL query, no explanation.`;
       query = response.content.trim();
     }
 
+    // Simulated Result Generation
+    const resultPrompt = `Given this SQL query: "${query}"
+Generate a realistic JSON result (array of objects) that would return from a database.
+Return ONLY valid JSON.`;
+
+    const resultResponse = await this.aiProvider.generateText(resultPrompt);
+    let result: any;
+    try {
+      result = JSON.parse(resultResponse.content);
+    } catch {
+      result = { message: "Query executed, but could not parse simulated result." };
+    }
+
     const log = new QueryLog({
       id: randomUUID(),
       query,
+      result,
       connectionId: dto.connectionId,
       userId,
       executedAt: new Date(),

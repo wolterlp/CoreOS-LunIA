@@ -1,12 +1,9 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../shared/infrastructure/prisma.client';
 import { Conversation } from '../domain/conversation.entity';
 import { Message, MessageChannel, MessageDirection } from '../domain/message.entity';
 import { CommunicationRepository } from '../domain/communication.repository';
 import { config } from '../../../config';
 
-const prisma = new PrismaClient({
-  datasources: { db: { url: config.db.url } },
-});
 
 export class PrismaCommunicationRepository implements CommunicationRepository {
   private conversationToDomain(p: any): Conversation {

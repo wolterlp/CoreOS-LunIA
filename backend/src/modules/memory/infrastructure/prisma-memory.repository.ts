@@ -1,11 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../shared/infrastructure/prisma.client';
 import { MemoryEntry, MemoryType } from '../domain/memory-entry.entity';
 import { MemoryRepository } from '../domain/memory.repository';
 import { config } from '../../../config';
 
-const prisma = new PrismaClient({
-  datasources: { db: { url: config.db.url } },
-});
 
 export class PrismaMemoryRepository implements MemoryRepository {
   private toDomain(p: any): MemoryEntry {

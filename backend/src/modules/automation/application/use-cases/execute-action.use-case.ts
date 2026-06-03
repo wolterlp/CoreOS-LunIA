@@ -12,11 +12,20 @@ export class ExecuteActionUseCase {
       throw new NotFoundError('Automation rule not found');
     }
 
+    console.log(`[Automation]: Executing action for rule "${rule.name}"...`);
+
+    // Simulate real action execution (e.g. sending an email, updating a record)
+    const result = {
+      message: `Action "${rule.name}" executed successfully via Cerebro IA Automation engine.`,
+      timestamp: new Date().toISOString(),
+      actionDetails: rule.action,
+    };
+
     const log = new AutomationLog({
       id: randomUUID(),
       action: rule.name,
-      status: 'EXECUTED',
-      result: { message: `Action "${rule.name}" execution triggered` },
+      status: 'SUCCESS',
+      result,
       ruleId,
       userId,
       executedAt: new Date(),

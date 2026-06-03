@@ -1,12 +1,9 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../shared/infrastructure/prisma.client';
 import { Agent, AgentType, AgentStatus } from '../domain/agent.entity';
 import { AgentTask, TaskStatus } from '../domain/agent-task.entity';
 import { AgentRepository } from '../domain/agent.repository';
 import { config } from '../../../config';
 
-const prisma = new PrismaClient({
-  datasources: { db: { url: config.db.url } },
-});
 
 export class PrismaAgentRepository implements AgentRepository {
   private toDomain(p: any): Agent {

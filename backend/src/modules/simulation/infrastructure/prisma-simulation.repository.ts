@@ -1,11 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../shared/infrastructure/prisma.client';
 import { SimulationScenario } from '../domain/simulation-scenario.entity';
 import { SimulationRepository } from '../domain/simulation.repository';
 import { config } from '../../../config';
 
-const prisma = new PrismaClient({
-  datasources: { db: { url: config.db.url } },
-});
 
 export class PrismaSimulationRepository implements SimulationRepository {
   private toDomain(p: any): SimulationScenario {

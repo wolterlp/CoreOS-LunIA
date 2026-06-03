@@ -1,13 +1,10 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../shared/infrastructure/prisma.client';
 import { DatabaseConnection } from '../domain/database-connection.entity';
 import { TableSchema } from '../domain/table-schema.entity';
 import { QueryLog } from '../domain/query-log.entity';
 import { DBConnectionRepository } from '../domain/db-connection.repository';
 import { config } from '../../../config';
 
-const prisma = new PrismaClient({
-  datasources: { db: { url: config.db.url } },
-});
 
 export class PrismaDBConnectionRepository implements DBConnectionRepository {
   private connectionToDomain(p: any): DatabaseConnection {

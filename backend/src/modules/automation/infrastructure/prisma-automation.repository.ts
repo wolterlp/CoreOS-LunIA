@@ -1,12 +1,9 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../shared/infrastructure/prisma.client';
 import { AutomationRule, AutomationTrigger, AutomationMode } from '../domain/automation-rule.entity';
 import { AutomationLog } from '../domain/automation-log.entity';
 import { AutomationRepository } from '../domain/automation.repository';
 import { config } from '../../../config';
 
-const prisma = new PrismaClient({
-  datasources: { db: { url: config.db.url } },
-});
 
 export class PrismaAutomationRepository implements AutomationRepository {
   private ruleToDomain(p: any): AutomationRule {

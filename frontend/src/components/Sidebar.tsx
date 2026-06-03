@@ -1,17 +1,19 @@
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
 const menuItems = [
-  { name: 'Dashboard', icon: '📊' },
-  { name: 'Memoria', icon: '🧠' },
-  { name: 'Analizador BD', icon: '🗄️' },
-  { name: 'Simulación', icon: '🎲' },
-  { name: 'Automatización', icon: '⚙️' },
-  { name: 'Agentes', icon: '🤖' },
-  { name: 'Comunicación', icon: '💬' },
-  { name: 'Configuración', icon: '🛠️' },
+  { name: 'Dashboard', icon: '📊', path: '/' },
+  { name: 'Memoria', icon: '🧠', path: '/memory' },
+  { name: 'Analizador BD', icon: '🗄️', path: '/db-analyzer' },
+  { name: 'Simulación', icon: '🎲', path: '/simulations' },
+  { name: 'Automatización', icon: '⚙️', path: '/automation' },
+  { name: 'Agentes', icon: '🤖', path: '/agents' },
+  { name: 'Comunicación', icon: '💬', path: '/communication' },
 ];
 
 export const Sidebar: React.FC = () => {
+  const location = useLocation();
+
   return (
     <div className="w-64 bg-slate-900 min-h-screen text-white p-4">
       <div className="mb-8 px-2">
@@ -23,14 +25,18 @@ export const Sidebar: React.FC = () => {
 
       <nav className="space-y-1">
         {menuItems.map((item) => (
-          <a
+          <Link
             key={item.name}
-            href="#"
-            className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors text-slate-300 hover:text-white group"
+            to={item.path}
+            className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors group ${
+              location.pathname === item.path
+                ? 'bg-blue-600 text-white'
+                : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+            }`}
           >
             <span className="text-lg">{item.icon}</span>
             <span className="font-medium">{item.name}</span>
-          </a>
+          </Link>
         ))}
       </nav>
 

@@ -1,17 +1,10 @@
 // src/modules/auth/infrastructure/prisma-user.repository.ts
 
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../shared/infrastructure/prisma.client';
 import { User, Role } from '../domain/user.entity';
 import { UserRepository } from '../domain/user.repository';
 import { config } from '../../../config';
 
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: config.db.url,
-    },
-  },
-});
 
 export class PrismaUserRepository implements UserRepository {
   private toDomain(prismaUser: any): User {
