@@ -12,6 +12,7 @@ import simulationRoutes from './modules/simulation/infrastructure/simulation.rou
 import dbAnalyzerRoutes from './modules/db-analyzer/infrastructure/db-analyzer.routes';
 import automationRoutes from './modules/automation/infrastructure/automation.routes';
 import communicationRoutes from './modules/communication/infrastructure/communication.routes';
+import { alertRoutes } from './modules/alerts/infrastructure/alert.routes';
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use('/api/simulations', simulationRoutes);
 app.use('/api/db-analyzer', dbAnalyzerRoutes);
 app.use('/api/automation', automationRoutes);
 app.use('/api/communication', communicationRoutes);
+app.use('/api/alerts', alertRoutes);
 
 // Start the Heartbeat system
 const heartbeat = HeartbeatService.getInstance();

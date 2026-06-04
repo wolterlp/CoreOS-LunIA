@@ -7,7 +7,7 @@ const router = Router();
 router.use(authMiddleware);
 
 router.post('/', SimulationController.create);
-router.get('/history', SimulationController.history);
+router.get('/history', SimulationController.getHistory);
 router.post('/:id/run', SimulationController.run);
 
 export default router;

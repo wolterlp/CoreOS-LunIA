@@ -8,8 +8,7 @@ router.use(authMiddleware);
 
 router.post('/rules', AutomationController.createRule);
 router.get('/rules', AutomationController.listRules);
-router.delete('/rules/:id', AutomationController.deleteRule);
-router.post('/rules/:id/execute', AutomationController.execute);
+router.post('/rules/:id/execute', AutomationController.executeRule);
 router.get('/history', AutomationController.getHistory);
 
 export default router;

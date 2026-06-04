@@ -1,6 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { memoryService, agentService, simulationService, dbAnalyzerService } from '../services/api';
+import {
+  memoryService,
+  agentService,
+  simulationService,
+  dbAnalyzerService,
+  automationService,
+  communicationService
+} from '../services/api';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  LineChart, Line, ComposedChart, Area
+} from 'recharts';
 
 export const MemoryPage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
@@ -45,7 +56,7 @@ export const MemoryPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 pb-24">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-slate-800">Memoria Empresarial</h1>
         <button
@@ -203,7 +214,7 @@ export const AgentsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 pb-24">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-slate-800">Agentes IA</h1>
         <button
@@ -373,8 +384,16 @@ export const SimulationsPage: React.FC = () => {
 
   const selectedSim = (simulations as any)?.find((s: any) => s.id === selectedSimId);
 
+  // Simulated chart data based on simulation results
+  const chartData = selectedSim?.results ? [
+    { name: 'Actual', valor: 100 },
+    { name: 'Pesimista', valor: selectedSim.results.worst_case ? 95 : 90 },
+    { name: 'Probable', valor: selectedSim.results.probable_case ? 110 : 105 },
+    { name: 'Optimista', valor: selectedSim.results.best_case ? 125 : 120 },
+  ] : [];
+
   return (
-    <div className="p-6">
+    <div className="p-6 pb-24">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-slate-800">Simulación Estratégica</h1>
         <button
@@ -483,6 +502,25 @@ export const SimulationsPage: React.FC = () => {
                     <div className="bg-slate-50 p-4 rounded-lg font-mono text-sm overflow-auto max-h-48 border border-slate-100">
                       <pre>{JSON.stringify(selectedSim.variables, null, 2)}</pre>
                     </div>
+
+                    <h3 className="text-sm font-bold text-gray-400 uppercase mb-3 mt-6">Visualización de Impacto</h3>
+                    {selectedSim.results ? (
+                      <div className="h-48">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={chartData}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis dataKey="name" tick={{fontSize: 10}} />
+                            <YAxis hide />
+                            <Tooltip />
+                            <Bar dataKey="valor" fill="#2dd4bf" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    ) : (
+                      <div className="h-48 bg-slate-50 rounded-lg flex items-center justify-center text-xs text-slate-400 italic">
+                        Gráfico disponible tras ejecución
+                      </div>
+                    )}
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-gray-400 uppercase mb-3">Resultados Proyectados</h3>
@@ -579,7 +617,7 @@ export const DBAnalyzerPage: React.FC = () => {
   const selectedConn = (connections as any)?.find((c: any) => c.id === selectedConnId);
 
   return (
-    <div className="p-6">
+    <div className="p-6 pb-24">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-slate-800">Analizador de BD</h1>
         <button
@@ -737,16 +775,286 @@ export const DBAnalyzerPage: React.FC = () => {
   );
 };
 
-export const AutomationPage: React.FC = () => (
-  <div className="p-6">
-    <h1 className="text-3xl font-bold mb-6">Automatización</h1>
-    <p>Reglas de negocio y ejecución de acciones autónomas.</p>
-  </div>
-);
+export const AutomationPage: React.FC = () => {
+  const [showForm, setShowForm] = useState(false);
+  const [name, setName] = useState('');
+  const [trigger, setTrigger] = useState('SCHEDULED');
+  const [action, setAction] = useState('{\n  "type": "EMAIL",\n  "to": "admin@empresa.com",\n  "subject": "Alerta de Inventario"\n}');
 
-export const CommunicationPage: React.FC = () => (
-  <div className="p-6">
-    <h1 className="text-3xl font-bold mb-6">Comunicación</h1>
-    <p>Centro unificado de mensajes y canales externos.</p>
-  </div>
-);
+  const queryClient = useQueryClient();
+
+  const { data: rules, isLoading: isLoadingRules } = useQuery({
+    queryKey: ['rules'],
+    queryFn: () => automationService.getRules(),
+  });
+
+  const { data: logs, isLoading: isLoadingLogs } = useQuery({
+    queryKey: ['automationLogs'],
+    queryFn: () => automationService.getLogs(),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: any) => automationService.createRule(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rules'] });
+      setShowForm(false);
+      setName('');
+    },
+  });
+
+  const executeMutation = useMutation({
+    mutationFn: (id: string) => automationService.executeRule(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['automationLogs'] });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      createMutation.mutate({ name, trigger, action: JSON.parse(action) });
+    } catch (err) {
+      alert('La acción debe ser un JSON válido');
+    }
+  };
+
+  return (
+    <div className="p-6 pb-24">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-slate-800">Automatización</h1>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors font-bold shadow-sm"
+        >
+          {showForm ? 'Cancelar' : '+ Nueva Regla'}
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="mb-8 bg-white p-6 rounded-xl shadow-md border border-indigo-100">
+          <h2 className="text-xl font-bold mb-4 text-slate-700">Crear Regla de Automatización</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Nombre de la Regla</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ej: Reporte Diario de Ventas"
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 p-2 border"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Trigger</label>
+                <select
+                  value={trigger}
+                  onChange={(e) => setTrigger(e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 p-2 border"
+                >
+                  <option value="SCHEDULED">Programado (Heartbeat)</option>
+                  <option value="ON_EVENT">Por Evento</option>
+                  <option value="MANUAL">Manual</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Acción (JSON)</label>
+              <textarea
+                value={action}
+                onChange={(e) => setAction(e.target.value)}
+                rows={4}
+                className="mt-1 block w-full rounded-md border-gray-300 p-2 border font-mono text-sm"
+              ></textarea>
+            </div>
+            <button
+              type="submit"
+              disabled={createMutation.isPending}
+              className="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 font-bold"
+            >
+              {createMutation.isPending ? 'Guardando...' : 'Guardar Regla'}
+            </button>
+          </form>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h2 className="text-xl font-bold mb-4 text-slate-700">Reglas Activas</h2>
+          {isLoadingRules ? <p>Cargando reglas...</p> : (
+            <div className="space-y-3">
+              {(rules as any)?.map((rule: any) => (
+                <div key={rule.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
+                  <div>
+                    <p className="font-bold text-slate-800">{rule.name}</p>
+                    <p className="text-xs text-gray-500">{rule.trigger} • {rule.status}</p>
+                  </div>
+                  <button
+                    onClick={() => executeMutation.mutate(rule.id)}
+                    disabled={executeMutation.isPending}
+                    className="text-[10px] bg-white border border-indigo-200 text-indigo-600 px-3 py-1 rounded hover:bg-indigo-50 font-bold"
+                  >
+                    Ejecutar
+                  </button>
+                </div>
+              ))}
+              {(!rules || (rules as any).length === 0) && <p className="text-sm text-gray-400 italic">No hay reglas configuradas.</p>}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h2 className="text-xl font-bold mb-4 text-slate-700">Historial de Ejecución</h2>
+          {isLoadingLogs ? <p>Cargando logs...</p> : (
+            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+              {(logs as any)?.map((log: any) => (
+                <div key={log.id} className="p-3 border-b border-gray-50 text-sm">
+                  <div className="flex justify-between items-start">
+                    <span className="font-bold text-slate-700">{log.ruleName || 'Tarea Manual'}</span>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                      log.status === 'SUCCESS' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
+                    }`}>
+                      {log.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">{new Date(log.createdAt).toLocaleString()}</p>
+                  {log.error && <p className="text-[10px] text-red-400 mt-1 italic">{log.error}</p>}
+                </div>
+              ))}
+              {(!logs || (logs as any).length === 0) && <p className="text-sm text-gray-400 italic">No hay registros de ejecución.</p>}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const CommunicationPage: React.FC = () => {
+  const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
+  const [message, setMessage] = useState('');
+
+  const queryClient = useQueryClient();
+
+  const { data: conversations, isLoading: isLoadingConvs } = useQuery({
+    queryKey: ['conversations'],
+    queryFn: () => communicationService.getConversations(),
+  });
+
+  const { data: messages, isLoading: isLoadingMessages } = useQuery({
+    queryKey: ['messages', selectedConvId],
+    queryFn: () => communicationService.getMessages(selectedConvId!),
+    enabled: !!selectedConvId,
+    refetchInterval: 5000, // Polling for messages
+  });
+
+  const sendMutation = useMutation({
+    mutationFn: (data: any) => communicationService.sendMessage(data),
+    onSuccess: () => {
+      setMessage('');
+      queryClient.invalidateQueries({ queryKey: ['messages', selectedConvId] });
+    },
+  });
+
+  const handleSend = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!message.trim() || !selectedConvId) return;
+
+    const conv = (conversations as any)?.find((c: any) => c.id === selectedConvId);
+    sendMutation.mutate({
+      recipient: conv?.contact,
+      channel: conv?.channel,
+      message: message,
+    });
+  };
+
+  return (
+    <div className="h-full flex flex-col pb-16">
+      <div className="p-6 border-b border-gray-100 bg-white">
+        <h1 className="text-3xl font-bold text-slate-800">Comunicación</h1>
+        <p className="text-sm text-gray-500">Omnicanalidad: WhatsApp, Email, Slack y más.</p>
+      </div>
+
+      <div className="flex-1 flex overflow-hidden">
+        {/* Conversations Sidebar */}
+        <div className="w-80 border-r border-gray-100 bg-white overflow-y-auto">
+          {isLoadingConvs ? <p className="p-4">Cargando chats...</p> : (
+            <div className="divide-y divide-gray-50">
+              {(conversations as any)?.map((conv: any) => (
+                <div
+                  key={conv.id}
+                  onClick={() => setSelectedConvId(conv.id)}
+                  className={`p-4 cursor-pointer hover:bg-slate-50 transition-colors ${
+                    selectedConvId === conv.id ? 'bg-blue-50 border-r-4 border-blue-500' : ''
+                  }`}
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    <p className="font-bold text-slate-800">{conv.contact}</p>
+                    <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded uppercase font-bold">
+                      {conv.channel}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 truncate">{conv.lastMessage || 'Sin mensajes'}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Chat Area */}
+        <div className="flex-1 flex flex-col bg-slate-50">
+          {selectedConvId ? (
+            <>
+              <div className="flex-1 p-6 overflow-y-auto space-y-4">
+                {isLoadingMessages ? <p>Cargando mensajes...</p> : (
+                  <>
+                    {(messages as any)?.map((msg: any) => (
+                      <div key={msg.id} className={`flex ${msg.direction === 'OUTGOING' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[70%] p-3 rounded-2xl text-sm shadow-sm ${
+                          msg.direction === 'OUTGOING'
+                            ? 'bg-blue-600 text-white rounded-tr-none'
+                            : 'bg-white text-slate-800 rounded-tl-none border border-gray-100'
+                        }`}>
+                          <p>{msg.content}</p>
+                          <p className={`text-[10px] mt-1 ${msg.direction === 'OUTGOING' ? 'text-blue-100' : 'text-gray-400'}`}>
+                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    <div id="messages-end"></div>
+                  </>
+                )}
+              </div>
+
+              <div className="p-4 bg-white border-t border-gray-100">
+                <form onSubmit={handleSend} className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Escribe un mensaje..."
+                    className="flex-1 border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={sendMutation.isPending || !message.trim()}
+                    className="bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  >
+                    ✈️
+                  </button>
+                </form>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
+              <div className="text-6xl mb-4">💬</div>
+              <p className="font-medium">Selecciona una conversación para comenzar.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};

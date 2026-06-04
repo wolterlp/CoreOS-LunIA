@@ -11,16 +11,16 @@ export class ExecuteQueryUseCase {
     private readonly aiProvider: AIProvider,
   ) {}
 
-  async execute(dto: ExecuteQueryDto, userId: string): Promise<QueryLog> {
-    const connection = await this.dbConnectionRepository.findById(dto.connectionId);
+  async execute(connectionId: string, dto: ExecuteQueryDto, userId: string): Promise<QueryLog> {
+    const connection = await this.dbConnectionRepository.findById(connectionId);
     if (!connection || connection.userId !== userId) {
       throw new NotFoundError('Database connection not found');
     }
 
-    let query = dto.query;
+    let query = dto.query || '';
 
     if (dto.naturalLanguage) {
-      const schemas = await this.dbConnectionRepository.findSchemasByConnectionId(dto.connectionId);
+      const schemas = await this.dbConnectionRepository.findSchemasByConnectionId(connectionId);
       const prompt = `Given a ${connection.type} database with these tables:
 ${JSON.stringify(schemas.map(s => ({ table: s.tableName, columns: s.columns })), null, 2)}
 
@@ -50,7 +50,7 @@ Return ONLY valid JSON.`;
       id: randomUUID(),
       query,
       result,
-      connectionId: dto.connectionId,
+      connectionId,
       userId,
       executedAt: new Date(),
     });

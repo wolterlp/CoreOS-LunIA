@@ -1,10 +1,11 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { PrismaAutomationRepository } from './prisma-automation.repository';
 import { CreateRuleUseCase } from '../application/use-cases/create-rule.use-case';
 import { ExecuteActionUseCase } from '../application/use-cases/execute-action.use-case';
 import { GetExecutionHistoryUseCase } from '../application/use-cases/get-execution-history.use-case';
 import { CreateRuleDtoSchema } from '../application/dto/create-rule.dto';
 import { ResponseHelper } from '../../../shared/response.helper';
+import { AuthRequest } from '../../../shared/auth.middleware';
 
 const automationRepository = new PrismaAutomationRepository();
 const createRuleUseCase = new CreateRuleUseCase(automationRepository);
@@ -12,10 +13,10 @@ const executeActionUseCase = new ExecuteActionUseCase(automationRepository);
 const getExecutionHistoryUseCase = new GetExecutionHistoryUseCase(automationRepository);
 
 export class AutomationController {
-  static async createRule(req: Request, res: Response, next: NextFunction) {
+  static async createRule(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const dto = CreateRuleDtoSchema.parse(req.body);
-      const userId = (req as any).user.userId;
+      const userId = req.user!.userId;
       const rule = await createRuleUseCase.execute(dto, userId);
       ResponseHelper.success(res, rule, 'Automation rule created', 201);
     } catch (error) {
@@ -23,9 +24,9 @@ export class AutomationController {
     }
   }
 
-  static async listRules(req: Request, res: Response, next: NextFunction) {
+  static async listRules(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user.userId;
+      const userId = req.user!.userId;
       const rules = await automationRepository.findByUserId(userId);
       ResponseHelper.success(res, rules, 'Automation rules retrieved');
     } catch (error) {
@@ -33,30 +34,21 @@ export class AutomationController {
     }
   }
 
-  static async execute(req: Request, res: Response, next: NextFunction) {
+  static async executeRule(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user.userId;
-      const log = await executeActionUseCase.execute(req.params.id, userId);
-      ResponseHelper.success(res, log, 'Action executed');
+      const userId = req.user!.userId;
+      const result = await executeActionUseCase.execute(req.params.id, userId);
+      ResponseHelper.success(res, result, 'Automation rule executed');
     } catch (error) {
       next(error);
     }
   }
 
-  static async getHistory(req: Request, res: Response, next: NextFunction) {
+  static async getHistory(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user.userId;
-      const logs = await getExecutionHistoryUseCase.execute(userId);
-      ResponseHelper.success(res, logs, 'Execution history retrieved');
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  static async deleteRule(req: Request, res: Response, next: NextFunction) {
-    try {
-      await automationRepository.delete(req.params.id);
-      ResponseHelper.success(res, null, 'Rule deleted');
+      const userId = req.user!.userId;
+      const history = await getExecutionHistoryUseCase.execute(userId);
+      ResponseHelper.success(res, history, 'Execution history retrieved');
     } catch (error) {
       next(error);
     }

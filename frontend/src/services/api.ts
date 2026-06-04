@@ -21,7 +21,9 @@ api.interceptors.request.use(
 
 // Response Interceptor for Error Handling
 api.interceptors.response.use(
-  (response) => response.data,
+  (response: any) => {
+    return response.data.data !== undefined ? response.data.data : response.data;
+  },
   (error) => {
     const message = error.response?.data?.message || 'Something went wrong';
     if (error.response?.status === 401) {
@@ -65,6 +67,7 @@ export const dbAnalyzerService = {
 export const automationService = {
   getRules: () => api.get('/api/automation/rules'),
   createRule: (data: any) => api.post('/api/automation/rules', data),
+  executeRule: (id: string) => api.post(`/api/automation/rules/${id}/execute`),
   getLogs: () => api.get('/api/automation/history'),
 };
 
@@ -72,6 +75,12 @@ export const communicationService = {
   getConversations: () => api.get('/api/communication/conversations'),
   getMessages: (convId: string) => api.get(`/api/communication/conversations/${convId}/messages`),
   sendMessage: (data: any) => api.post('/api/communication/send', data),
+};
+
+export const alertService = {
+  getAlerts: () => api.get('/api/alerts'),
+  markAsRead: (id: string) => api.patch(`/api/alerts/${id}/read`),
+  deleteAlert: (id: string) => api.delete(`/api/alerts/${id}`),
 };
 
 export const authService = {

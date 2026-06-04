@@ -6,8 +6,8 @@ const router = Router();
 
 router.use(authMiddleware);
 
-router.post('/send', CommunicationController.send);
-router.get('/conversations', CommunicationController.getConversations);
+router.post('/send', CommunicationController.sendMessage);
+router.get('/conversations', CommunicationController.listConversations);
 router.get('/conversations/:conversationId/messages', CommunicationController.getMessages);
 
 export default router;
