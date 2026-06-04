@@ -7,7 +7,11 @@ import {
   SimulationsPage,
   DBAnalyzerPage,
   AutomationPage,
-  CommunicationPage
+  CommunicationPage,
+  BusinessUnderstandingPage,
+  VirtualSecretaryPage,
+  AlertsPage,
+  GrowthAdvisorPage
 } from './pages/ModulePages';
 import { Sidebar } from './components/Sidebar';
 
@@ -31,6 +35,10 @@ export const AppRoutes = () => {
       <Route path="/db-analyzer" element={<MainLayout><DBAnalyzerPage /></MainLayout>} />
       <Route path="/automation" element={<MainLayout><AutomationPage /></MainLayout>} />
       <Route path="/communication" element={<MainLayout><CommunicationPage /></MainLayout>} />
+      <Route path="/business-understanding" element={<MainLayout><BusinessUnderstandingPage /></MainLayout>} />
+      <Route path="/secretary" element={<MainLayout><VirtualSecretaryPage /></MainLayout>} />
+      <Route path="/alerts" element={<MainLayout><AlertsPage /></MainLayout>} />
+      <Route path="/growth" element={<MainLayout><GrowthAdvisorPage /></MainLayout>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

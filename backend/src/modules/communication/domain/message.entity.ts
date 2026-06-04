@@ -32,7 +32,9 @@ export class Message {
   get direction(): MessageDirection { return this.props.direction; }
   get channel(): MessageChannel { return this.props.channel; }
   get status(): string { return this.props.status; }
+  set status(value: string) { this.props.status = value; }
   get metadata(): Record<string, any> | undefined { return this.props.metadata; }
+  set metadata(value: Record<string, any> | undefined) { this.props.metadata = value; }
   get conversationId(): string { return this.props.conversationId; }
   get userId(): string { return this.props.userId; }
   get sentAt(): Date { return this.props.sentAt; }

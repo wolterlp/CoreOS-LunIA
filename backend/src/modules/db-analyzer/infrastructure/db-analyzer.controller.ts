@@ -61,7 +61,8 @@ export class DbAnalyzerController {
     try {
       const dto = ExecuteQueryDtoSchema.parse(req.body);
       const userId = req.user!.userId;
-      const result = await executeQueryUseCase.execute(req.params.id, dto, userId);
+      const userRole = req.user!.role;
+      const result = await executeQueryUseCase.execute(req.params.id, dto, userId, userRole);
       ResponseHelper.success(res, result, 'Query executed');
     } catch (error) {
       next(error);

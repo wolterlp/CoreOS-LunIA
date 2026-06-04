@@ -5,6 +5,8 @@ import { config } from './config';
 import { AppError } from './shared/errors';
 import { ResponseHelper } from './shared/response.helper';
 import { HeartbeatService } from './shared/services/heartbeat.service';
+import { ConfigController } from './shared/infrastructure/config.controller';
+import { validateStartupConfig } from './shared/infrastructure/startup-validator';
 import authRoutes from './modules/auth/infrastructure/auth.routes';
 import memoryRoutes from './modules/memory/infrastructure/memory.routes';
 import agentRoutes from './modules/agents/infrastructure/agent.routes';
@@ -13,6 +15,9 @@ import dbAnalyzerRoutes from './modules/db-analyzer/infrastructure/db-analyzer.r
 import automationRoutes from './modules/automation/infrastructure/automation.routes';
 import communicationRoutes from './modules/communication/infrastructure/communication.routes';
 import { alertRoutes } from './modules/alerts/infrastructure/alert.routes';
+import businessUnderstandingRoutes from './modules/business-understanding/infrastructure/business-understanding.routes';
+import virtualSecretaryRoutes from './modules/virtual-secretary/infrastructure/virtual-secretary.routes';
+import growthAdvisorRoutes from './modules/growth-advisor/infrastructure/growth-advisor.routes';
 
 const app = express();
 
@@ -24,9 +29,11 @@ app.get('/health', (req, res) => {
   ResponseHelper.success(res, {
     timestamp: new Date().toISOString(),
     version: '0.2.0',
-    env: config.env,
+    env: config.server.env,
   }, 'Cerebro Empresarial IA API is healthy');
 });
+
+app.get('/api/config/status', ConfigController.getStatus);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/memory', memoryRoutes);
@@ -36,6 +43,12 @@ app.use('/api/db-analyzer', dbAnalyzerRoutes);
 app.use('/api/automation', automationRoutes);
 app.use('/api/communication', communicationRoutes);
 app.use('/api/alerts', alertRoutes);
+app.use('/api/business-understanding', businessUnderstandingRoutes);
+app.use('/api/virtual-secretary', virtualSecretaryRoutes);
+app.use('/api/growth-advisor', growthAdvisorRoutes);
+
+// Validate configuration
+validateStartupConfig();
 
 // Start the Heartbeat system
 const heartbeat = HeartbeatService.getInstance();
@@ -60,12 +73,12 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
   return ResponseHelper.error(
     res,
-    config.env === 'development' ? err.message : 'Internal server error',
+    config.server.env === 'development' ? err.message : 'Internal server error',
     'InternalServerError',
     500
   );
 });
 
-app.listen(config.port, () => {
-  console.log(`[server]: Cerebro Empresarial IA running at http://localhost:${config.port} in ${config.env} mode`);
+app.listen(config.server.port, () => {
+  console.log(`[server]: ${config.server.appName} running at http://localhost:${config.server.port} in ${config.server.env} mode`);
 });
