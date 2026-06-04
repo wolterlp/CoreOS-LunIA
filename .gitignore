@@ -7,3 +7,6 @@ frontend/dist/
 backend/prisma/generated/
 .planning/
 /home/jules/verification/
+
+# CoreOS internal database (file-based, auto-created)
+.coreos/

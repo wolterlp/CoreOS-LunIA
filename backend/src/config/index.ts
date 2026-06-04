@@ -13,6 +13,7 @@ const envSchema = z.object({
   OPENAI_API_KEY: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
+  COREDB_PATH: z.string().optional(),
 });
 
 const envVars = envSchema.safeParse(process.env);
@@ -36,6 +37,9 @@ export const config = {
     openai: envVars.data.OPENAI_API_KEY,
     gemini: envVars.data.GEMINI_API_KEY,
     anthropic: envVars.data.ANTHROPIC_API_KEY,
+  },
+  coreDb: {
+    path: envVars.data.COREDB_PATH || undefined,
   },
 };
 
