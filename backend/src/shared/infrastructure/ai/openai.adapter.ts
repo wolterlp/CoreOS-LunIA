@@ -1,18 +1,29 @@
 import OpenAI from 'openai';
 import { AIProvider, AIProviderResponse } from '../../ai.provider';
 import { config } from '../../../config';
+import { ConfigService } from '../config.service';
 import { AppError } from '../../errors';
 
 export class OpenAIAdapter implements AIProvider {
   private client: OpenAI | null = null;
 
   constructor() {
-    if (config.ai.openai) {
+    this.init();
+  }
+
+  private async init() {
+    const key = await ConfigService.getInstance().get('OPENAI_API_KEY');
+    if (key) {
+      this.client = new OpenAI({ apiKey: key });
+    } else if (config.ai.openai) {
       this.client = new OpenAI({ apiKey: config.ai.openai });
     }
   }
 
   async generateText(prompt: string, options: any = {}): Promise<AIProviderResponse> {
+    if (!this.client) {
+        await this.init();
+    }
     if (!this.client) {
       console.warn('[AI]: OpenAI API Key not configured. Returning simulated response.');
       return this.simulateResponse(prompt);

@@ -18,6 +18,7 @@ import { alertRoutes } from './modules/alerts/infrastructure/alert.routes';
 import businessUnderstandingRoutes from './modules/business-understanding/infrastructure/business-understanding.routes';
 import virtualSecretaryRoutes from './modules/virtual-secretary/infrastructure/virtual-secretary.routes';
 import growthAdvisorRoutes from './modules/growth-advisor/infrastructure/growth-advisor.routes';
+import settingsRoutes from './modules/settings/infrastructure/settings.routes';
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use('/api/alerts', alertRoutes);
 app.use('/api/business-understanding', businessUnderstandingRoutes);
 app.use('/api/virtual-secretary', virtualSecretaryRoutes);
 app.use('/api/growth-advisor', growthAdvisorRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Validate configuration
 validateStartupConfig();

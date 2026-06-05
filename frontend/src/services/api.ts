@@ -110,4 +110,9 @@ export const authService = {
   getProfile: () => api.get('/api/auth/profile'),
 };
 
+export const settingsService = {
+  getSettings: () => api.get('/api/settings'),
+  updateSetting: (key: string, value: string) => api.put('/api/settings', { key, value }),
+};
+
 export default api;

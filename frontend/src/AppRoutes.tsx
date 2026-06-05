@@ -13,6 +13,7 @@ import {
   AlertsPage,
   GrowthAdvisorPage
 } from './pages/ModulePages';
+import { SettingsPage } from './pages/SettingsPage';
 import { Sidebar } from './components/Sidebar';
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => (
@@ -39,6 +40,7 @@ export const AppRoutes = () => {
       <Route path="/secretary" element={<MainLayout><VirtualSecretaryPage /></MainLayout>} />
       <Route path="/alerts" element={<MainLayout><AlertsPage /></MainLayout>} />
       <Route path="/growth" element={<MainLayout><GrowthAdvisorPage /></MainLayout>} />
+      <Route path="/settings" element={<MainLayout><SettingsPage /></MainLayout>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

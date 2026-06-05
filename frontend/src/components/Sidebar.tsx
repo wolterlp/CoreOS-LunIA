@@ -16,6 +16,7 @@ const menuItems = [
   { name: 'Automatización', icon: '⚙️', path: '/automation' },
   { name: 'Agentes', icon: '🤖', path: '/agents' },
   { name: 'Comunicación', icon: '💬', path: '/communication' },
+  { name: 'Configuración', icon: '⚙️', path: '/settings' },
 ];
 
 export const Sidebar: React.FC = () => {
