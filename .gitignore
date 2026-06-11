@@ -10,3 +10,5 @@ backend/prisma/generated/
 
 # CoreOS internal database (file-based, auto-created)
 .coreos/
+.planning/
+
