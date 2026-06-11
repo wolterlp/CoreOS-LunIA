@@ -1,18 +1,29 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AIProvider, AIProviderResponse } from '../../ai.provider';
 import { config } from '../../../config';
+import { ConfigService } from '../config.service';
 import { AppError } from '../../errors';
 
 export class GeminiAdapter implements AIProvider {
   private client: GoogleGenerativeAI | null = null;
 
   constructor() {
-    if (config.ai.gemini) {
+    this.init();
+  }
+
+  private async init() {
+    const key = await ConfigService.getInstance().get('GEMINI_API_KEY');
+    if (key) {
+      this.client = new GoogleGenerativeAI(key);
+    } else if (config.ai.gemini) {
       this.client = new GoogleGenerativeAI(config.ai.gemini);
     }
   }
 
   async generateText(prompt: string, options: any = {}): Promise<AIProviderResponse> {
+    if (!this.client) {
+      await this.init();
+    }
     if (!this.client) {
       console.warn('[AI]: Gemini API Key not configured. Returning simulated response.');
       return this.simulateResponse(prompt);

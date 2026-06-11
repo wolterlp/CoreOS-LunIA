@@ -6,6 +6,9 @@ const router = Router();
 
 router.use(authMiddleware);
 
+router.post('/diagnose', GrowthAdvisorController.diagnose);
+router.post('/plan', GrowthAdvisorController.generatePlan);
+router.get('/status', GrowthAdvisorController.getStatus);
 router.get('/dashboard', GrowthAdvisorController.getDashboard);
 router.post('/recommendations', GrowthAdvisorController.createRecommendation);
 router.get('/recommendations', GrowthAdvisorController.listRecommendations);

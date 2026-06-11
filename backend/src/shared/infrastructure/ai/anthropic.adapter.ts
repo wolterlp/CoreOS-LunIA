@@ -1,18 +1,29 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { AIProvider, AIProviderResponse } from '../../ai.provider';
 import { config } from '../../../config';
+import { ConfigService } from '../config.service';
 import { AppError } from '../../errors';
 
 export class AnthropicAdapter implements AIProvider {
   private client: Anthropic | null = null;
 
   constructor() {
-    if (config.ai.anthropic) {
+    this.init();
+  }
+
+  private async init() {
+    const key = await ConfigService.getInstance().get('ANTHROPIC_API_KEY');
+    if (key) {
+      this.client = new Anthropic({ apiKey: key });
+    } else if (config.ai.anthropic) {
       this.client = new Anthropic({ apiKey: config.ai.anthropic });
     }
   }
 
   async generateText(prompt: string, options: any = {}): Promise<AIProviderResponse> {
+    if (!this.client) {
+      await this.init();
+    }
     if (!this.client) {
       console.warn('[AI]: Anthropic API Key not configured. Returning simulated response.');
       return this.simulateResponse(prompt);

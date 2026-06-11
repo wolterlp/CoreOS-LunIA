@@ -1,11 +1,15 @@
 import { prisma } from '../infrastructure/prisma.client';
 import { OpenAIAdapter } from '../infrastructure/ai/openai.adapter';
+import { CheckRulesUseCase } from '../../modules/alerts/application/use-cases/check-rules.use-case';
+import { DetectAnomalyUseCase } from '../../modules/alerts/application/use-cases/detect-anomaly.use-case';
 
 export class HeartbeatService {
   private static instance: HeartbeatService;
   private intervalId: NodeJS.Timeout | null = null;
   private readonly INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
   private aiProvider: OpenAIAdapter;
+  private checkRulesUseCase = new CheckRulesUseCase();
+  private detectAnomalyUseCase = new DetectAnomalyUseCase();
 
   private constructor() {
     this.aiProvider = new OpenAIAdapter();
@@ -46,6 +50,13 @@ export class HeartbeatService {
     try {
       await this.checkPendingTasks();
       await this.checkAutomationRules();
+
+      const users = await prisma.user.findMany();
+      for (const user of users) {
+        await this.checkRulesUseCase.execute(user.id);
+        await this.detectAnomalyUseCase.execute(user.id);
+      }
+
       await this.generateProactiveAlerts();
     } catch (error) {
       console.error('[Heartbeat]: Error during pulse:', error);
@@ -60,7 +71,6 @@ export class HeartbeatService {
 
     for (const task of pendingTasks) {
       console.log(`[Heartbeat]: Processing pending task for agent ${task.agent.name}: ${task.title}`);
-      // Simulating task processing
       await prisma.agentTask.update({
         where: { id: task.id },
         data: {
@@ -101,32 +111,27 @@ export class HeartbeatService {
   }
 
   private async generateProactiveAlerts(): Promise<void> {
-    // Get all users to check their state
     const users = await prisma.user.findMany();
 
     for (const user of users) {
-      // Gather context
       const memories = await prisma.memoryEntry.findMany({
         where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
         take: 10
       });
 
+      if (memories.length === 0) continue;
+
       const recentHistory = memories.map(m => `[${m.type}] ${m.title}: ${m.content}`).join('\n');
 
       const prompt = `
-        Eres el Cerebro Empresarial IA (Asesor Económico Senior).
-        Analiza la situación reciente de la empresa del usuario y genera una ALERTA PROACTIVA si detectas riesgos o grandes oportunidades.
+        Eres el Cerebro Empresarial IA.
+        Analiza la situación y genera una ALERTA PROACTIVA si detectas riesgos o grandes oportunidades.
 
-        CONTEXTO RECIENTE:
+        CONTEXTO:
         ${recentHistory}
 
-        Responde ÚNICAMENTE en formato JSON con los campos:
-        - title: Título corto de la alerta
-        - description: Explicación detallada y acción recomendada
-        - severity: "INFO", "WARNING" o "CRITICAL"
-
-        Si no hay nada relevante que alertar, responde con {"skip": true}.
+        Responde ÚNICAMENTE JSON: {"title": "...", "description": "...", "severity": "INFO|WARNING|CRITICAL"} o {"skip": true}.
       `;
 
       const response = await this.aiProvider.generateText(prompt, { model: 'gpt-4o' });
@@ -142,11 +147,8 @@ export class HeartbeatService {
               userId: user.id
             }
           });
-          console.log(`[Heartbeat]: Created proactive alert for ${user.email}: ${result.title}`);
         }
-      } catch (e) {
-        // Skip if AI doesn't return valid JSON
-      }
+      } catch (e) {}
     }
   }
 }

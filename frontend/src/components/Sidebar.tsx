@@ -1,21 +1,36 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
+import { useQuery } from '@tanstack/react-query';
+import { alertService } from '../services/api';
 
 const menuItems = [
   { name: 'Dashboard', icon: '📊', path: '/' },
+  { name: 'Comprensión', icon: '🔍', path: '/business-understanding' },
+  { name: 'Crecimiento', icon: '🚀', path: '/growth' },
+  { name: 'Alertas', icon: '🚨', path: '/alerts' },
+  { name: 'Secretaria', icon: '📅', path: '/secretary' },
   { name: 'Memoria', icon: '🧠', path: '/memory' },
   { name: 'Analizador BD', icon: '🗄️', path: '/db-analyzer' },
   { name: 'Simulación', icon: '🎲', path: '/simulations' },
   { name: 'Automatización', icon: '⚙️', path: '/automation' },
   { name: 'Agentes', icon: '🤖', path: '/agents' },
   { name: 'Comunicación', icon: '💬', path: '/communication' },
+  { name: 'Configuración', icon: '⚙️', path: '/settings' },
 ];
 
 export const Sidebar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+
+  const { data: alerts } = useQuery({
+    queryKey: ['alerts'],
+    queryFn: () => alertService.getAlerts(),
+    refetchInterval: 30000
+  });
+
+  const unreadCount = (alerts as any)?.filter((a: any) => !a.isRead).length || 0;
 
   const handleLogout = () => {
     logout();
@@ -34,19 +49,26 @@ export const Sidebar: React.FC = () => {
         <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mt-1 ml-10">Smart OS</p>
       </div>
 
-      <nav className="space-y-1 flex-1">
+      <nav className="space-y-1 flex-1 overflow-y-auto pr-2 custom-scrollbar">
         {menuItems.map((item) => (
           <Link
             key={item.name}
             to={item.path}
-            className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all group ${
+            className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all group ${
               location.pathname === item.path
                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50'
                 : 'text-slate-400 hover:bg-slate-800 hover:text-white'
             }`}
           >
-            <span className="text-lg group-hover:scale-110 transition-transform">{item.icon}</span>
-            <span className="font-medium">{item.name}</span>
+            <div className="flex items-center space-x-3">
+              <span className="text-lg group-hover:scale-110 transition-transform">{item.icon}</span>
+              <span className="font-medium text-xs">{item.name}</span>
+            </div>
+            {item.path === '/alerts' && unreadCount > 0 && (
+              <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                {unreadCount}
+              </span>
+            )}
           </Link>
         ))}
       </nav>

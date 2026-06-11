@@ -1,7 +1,7 @@
 import { QueryLog } from '../../domain/query-log.entity';
 import { DBConnectionRepository } from '../../domain/db-connection.repository';
 import { ExecuteQueryDto } from '../dto/execute-query.dto';
-import { NotFoundError } from '../../../../shared/errors';
+import { NotFoundError, ForbiddenError } from '../../../../shared/errors';
 import { randomUUID } from 'crypto';
 import { AIProvider } from '../../../../shared/ai.provider';
 
@@ -11,7 +11,7 @@ export class ExecuteQueryUseCase {
     private readonly aiProvider: AIProvider,
   ) {}
 
-  async execute(connectionId: string, dto: ExecuteQueryDto, userId: string): Promise<QueryLog> {
+  async execute(connectionId: string, dto: ExecuteQueryDto, userId: string, userRole: string): Promise<QueryLog> {
     const connection = await this.dbConnectionRepository.findById(connectionId);
     if (!connection || connection.userId !== userId) {
       throw new NotFoundError('Database connection not found');
@@ -31,6 +31,19 @@ Return ONLY the SQL query, no explanation.`;
 
       const response = await this.aiProvider.generateText(prompt);
       query = response.content.trim();
+    }
+
+    // Security Layer: Prevent destructive queries
+    const destructiveKeywords = ['DROP', 'DELETE', 'ALTER', 'TRUNCATE', 'UPDATE', 'INSERT', 'CREATE', 'GRANT', 'REVOKE'];
+    const upperQuery = query.toUpperCase();
+
+    const isDestructive = destructiveKeywords.some(kw => {
+        const regex = new RegExp(`\\b${kw}\\b`);
+        return regex.test(upperQuery);
+    });
+
+    if (isDestructive && userRole !== 'ADMIN') {
+      throw new ForbiddenError('Read-only mode: Destructive queries are only allowed for ADMIN users.');
     }
 
     // Simulated Result Generation

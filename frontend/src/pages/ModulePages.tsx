@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   memoryService,
@@ -6,11 +6,15 @@ import {
   simulationService,
   dbAnalyzerService,
   automationService,
-  communicationService
+  communicationService,
+  businessService,
+  secretaryService,
+  growthService,
+  alertService
 } from '../services/api';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  LineChart, Line, ComposedChart, Area
+  LineChart, Line, Area, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from 'recharts';
 
 export const MemoryPage: React.FC = () => {
@@ -384,7 +388,6 @@ export const SimulationsPage: React.FC = () => {
 
   const selectedSim = (simulations as any)?.find((s: any) => s.id === selectedSimId);
 
-  // Simulated chart data based on simulation results
   const chartData = selectedSim?.results ? [
     { name: 'Actual', valor: 100 },
     { name: 'Pesimista', valor: selectedSim.results.worst_case ? 95 : 90 },
@@ -946,7 +949,7 @@ export const CommunicationPage: React.FC = () => {
     queryKey: ['messages', selectedConvId],
     queryFn: () => communicationService.getMessages(selectedConvId!),
     enabled: !!selectedConvId,
-    refetchInterval: 5000, // Polling for messages
+    refetchInterval: 5000,
   });
 
   const sendMutation = useMutation({
@@ -977,7 +980,6 @@ export const CommunicationPage: React.FC = () => {
       </div>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Conversations Sidebar */}
         <div className="w-80 border-r border-gray-100 bg-white overflow-y-auto">
           {isLoadingConvs ? <p className="p-4">Cargando chats...</p> : (
             <div className="divide-y divide-gray-50">
@@ -1002,7 +1004,6 @@ export const CommunicationPage: React.FC = () => {
           )}
         </div>
 
-        {/* Chat Area */}
         <div className="flex-1 flex flex-col bg-slate-50">
           {selectedConvId ? (
             <>
@@ -1053,6 +1054,507 @@ export const CommunicationPage: React.FC = () => {
               <p className="font-medium">Selecciona una conversación para comenzar.</p>
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const BusinessUnderstandingPage: React.FC = () => {
+  const [selectedConnId, setSelectedConnId] = useState('');
+
+  const queryClient = useQueryClient();
+
+  const { data: connections } = useQuery({
+    queryKey: ['connections'],
+    queryFn: () => dbAnalyzerService.getConnections(),
+  });
+
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ['businessProfile'],
+    queryFn: () => businessService.getProfile(),
+  });
+
+  const analyzeMutation = useMutation({
+    mutationFn: (id: string) => businessService.analyze(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['businessProfile'] });
+    },
+  });
+
+  const profileData = profile as any;
+
+  return (
+    <div className="p-6 pb-24">
+      <h1 className="text-3xl font-bold text-slate-800 mb-6">Comprensión Empresarial</h1>
+      <p className="text-gray-500 mb-8 max-w-2xl">
+        Esta capa utiliza IA para analizar tus bases de datos y construir un modelo mental de tu organización.
+      </p>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-1 space-y-6">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <h2 className="text-lg font-bold text-slate-700 mb-4">Analizar Nueva Fuente</h2>
+            <div className="space-y-4">
+              <label className="block text-sm font-medium text-gray-700">Seleccionar Base de Datos</label>
+              <select
+                value={selectedConnId}
+                onChange={(e) => setSelectedConnId(e.target.value)}
+                className="w-full p-2 border rounded-lg"
+              >
+                <option value="">-- Seleccionar --</option>
+                {(connections as any)?.map((c: any) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => selectedConnId && analyzeMutation.mutate(selectedConnId)}
+                disabled={analyzeMutation.isPending || !selectedConnId}
+                className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold disabled:opacity-50"
+              >
+                {analyzeMutation.isPending ? 'Analizando...' : 'Inferir Modelo'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="lg:col-span-2">
+          {isLoading ? (
+            <p>Cargando perfil...</p>
+          ) : profileData ? (
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-800">{profileData.industry}</h2>
+                  <p className="text-blue-600 font-medium">Tamaño: {profileData.size}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">Productos/Servicios</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {profileData.productsServices?.map((s: string) => (
+                      <span key={s} className="px-3 py-1 bg-slate-100 rounded-lg text-sm">{s}</span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">Segmentos</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {profileData.customerSegments?.map((s: string) => (
+                      <span key={s} className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-sm">{s}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 pt-8 border-t border-slate-50">
+                <h4 className="text-xs font-bold text-slate-400 uppercase mb-4">Procesos Clave</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {profileData.processes?.map((p: string) => (
+                    <div key={p} className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                      <span className="text-sm font-bold text-slate-700">{p}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-slate-400">Modelo aún no construido.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const VirtualSecretaryPage: React.FC = () => {
+  const [showEventForm, setShowEventForm] = useState(false);
+  const [title, setTitle] = useState('');
+  const [date, setDate] = useState('');
+
+  const queryClient = useQueryClient();
+
+  const { data: events } = useQuery({
+    queryKey: ['events'],
+    queryFn: () => secretaryService.getEvents(),
+  });
+
+  const { data: reminders } = useQuery({
+    queryKey: ['reminders'],
+    queryFn: () => secretaryService.getReminders(),
+  });
+
+  const scheduleMutation = useMutation({
+    mutationFn: (data: any) => secretaryService.scheduleEvent(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      setShowEventForm(false);
+      setTitle('');
+    },
+  });
+
+  const completeReminderMutation = useMutation({
+    mutationFn: (id: string) => secretaryService.completeReminder(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+    },
+  });
+
+  return (
+    <div className="p-6 pb-24">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-slate-800">Secretaria Virtual</h1>
+        <button
+          onClick={() => setShowEventForm(!showEventForm)}
+          className="bg-purple-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-purple-700 transition-colors"
+        >
+          {showEventForm ? 'Cancelar' : '+ Agendar Evento'}
+        </button>
+      </div>
+
+      {showEventForm && (
+        <div className="mb-8 bg-white p-6 rounded-2xl shadow-sm border border-purple-100">
+          <h2 className="text-xl font-bold text-slate-700 mb-4">Nueva Cita con Contexto IA</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Título de la Reunión</label>
+              <input
+                type="text" value={title} onChange={(e) => setTitle(e.target.value)}
+                placeholder="Ej: Revisión con Proveedor"
+                className="w-full p-2 border rounded-lg"
+              />
+            </div>
+            <div className="md:col-span-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Fecha y Hora</label>
+              <input
+                type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)}
+                className="w-full p-2 border rounded-lg"
+              />
+            </div>
+            <div className="md:col-span-1 flex items-end">
+              <button
+                onClick={() => scheduleMutation.mutate({ title, date: new Date(date).toISOString(), duration: 60, attendees: [] })}
+                disabled={!title || !date || scheduleMutation.isPending}
+                className="w-full bg-purple-600 text-white py-2 rounded-lg font-bold hover:bg-purple-700 disabled:opacity-50"
+              >
+                {scheduleMutation.isPending ? 'Procesando Contexto...' : 'Agendar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <h2 className="text-xl font-bold text-slate-700 mb-4 flex items-center">
+            <span className="mr-2">📅</span> Agenda Próxima
+          </h2>
+          <div className="space-y-4">
+            {(events as any)?.map((event: any) => (
+              <div key={event.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-xs font-bold text-purple-600 uppercase tracking-widest mb-1">
+                      {new Date(event.date).toLocaleString()}
+                    </p>
+                    <h3 className="text-lg font-bold text-slate-800">{event.title}</h3>
+                  </div>
+                  <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-bold">60 min</span>
+                </div>
+                <div className="mt-4 p-4 bg-slate-50 rounded-xl border-l-4 border-purple-500">
+                  <p className="text-xs font-bold text-slate-400 uppercase mb-2">Contexto IA Sugerido:</p>
+                  <p className="text-sm text-slate-600 leading-relaxed italic">"{event.description}"</p>
+                </div>
+              </div>
+            ))}
+            {(!events || (events as any).length === 0) && (
+              <div className="bg-white p-12 rounded-2xl text-center text-slate-400 border-2 border-dashed border-slate-100">
+                <p>No hay eventos programados.</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="lg:col-span-1">
+          <h2 className="text-xl font-bold text-slate-700 mb-4 flex items-center">
+            <span className="mr-2">🔔</span> Recordatorios Inteligentes
+          </h2>
+          <div className="space-y-3">
+            {(reminders as any)?.map((rem: any) => (
+              <div key={rem.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 group">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full uppercase">{rem.type}</span>
+                  <button
+                    onClick={() => completeReminderMutation.mutate(rem.id)}
+                    className="text-slate-300 hover:text-green-500 transition-colors"
+                  >
+                    ✓
+                  </button>
+                </div>
+                <p className="text-sm font-bold text-slate-800 mb-1">{rem.contextMessage || 'Tarea pendiente'}</p>
+                <p className="text-[10px] text-slate-400">Vence: {new Date(rem.dueDate).toLocaleDateString()}</p>
+              </div>
+            ))}
+            {(!reminders || (reminders as any).length === 0) && (
+              <p className="text-sm text-slate-400 italic">Sin recordatorios pendientes.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const AlertsPage: React.FC = () => {
+  const [showRuleForm, setShowRuleForm] = useState(false);
+  const [metric, setMetric] = useState('');
+  const [threshold, setThreshold] = useState(0);
+  const [condition, setCondition] = useState('>');
+  const [severity, setSeverity] = useState('WARNING');
+
+  const queryClient = useQueryClient();
+
+  const { data: alerts } = useQuery({ queryKey: ['alerts'], queryFn: () => alertService.getAlerts() });
+  const { data: rules } = useQuery({ queryKey: ['alertRules'], queryFn: () => alertService.getRules() });
+
+  const createRuleMutation = useMutation({
+    mutationFn: (data: any) => alertService.createRule(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alertRules'] });
+      setShowRuleForm(false);
+    },
+  });
+
+  const checkMutation = useMutation({
+    mutationFn: () => alertService.triggerCheck(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+    },
+  });
+
+  const markReadMutation = useMutation({
+    mutationFn: (id: string) => alertService.markAsRead(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+    },
+  });
+
+  return (
+    <div className="p-6 pb-24">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-slate-800">Alertas y Anomalías</h1>
+        <div className="flex space-x-3">
+          <button
+            onClick={() => checkMutation.mutate()}
+            disabled={checkMutation.isPending}
+            className="bg-slate-800 text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-slate-700"
+          >
+            {checkMutation.isPending ? 'Escaneando...' : 'Escanear Ahora'}
+          </button>
+          <button
+            onClick={() => setShowRuleForm(!showRuleForm)}
+            className="bg-red-600 text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-red-700"
+          >
+            {showRuleForm ? 'Cancelar' : '+ Nueva Regla'}
+          </button>
+        </div>
+      </div>
+
+      {showRuleForm && (
+        <div className="mb-8 bg-white p-6 rounded-2xl shadow-sm border border-red-100">
+          <h2 className="text-xl font-bold text-slate-700 mb-4">Configurar Regla de Monitoreo</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Métrica</label>
+              <input type="text" value={metric} onChange={(e) => setMetric(e.target.value)} placeholder="Ej: Ventas Diarias" className="w-full p-2 border rounded-lg" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Condición</label>
+              <select value={condition} onChange={(e) => setCondition(e.target.value)} className="w-full p-2 border rounded-lg">
+                <option value=">">{'>'} Mayor que</option>
+                <option value="<">{'<'}</option>
+                <option value="=">=</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Umbral</label>
+              <input type="number" value={threshold} onChange={(e) => setThreshold(Number(e.target.value))} className="w-full p-2 border rounded-lg" />
+            </div>
+            <button
+              onClick={() => createRuleMutation.mutate({ metric, condition, threshold, severity })}
+              className="bg-red-600 text-white py-2 rounded-lg font-bold"
+            >
+              Guardar Regla
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-4">
+          <h2 className="text-xl font-bold text-slate-700 mb-4">Historial de Alertas</h2>
+          {(alerts as any)?.map((alert: any) => (
+            <div key={alert.id} className={`p-6 rounded-2xl border-l-8 bg-white shadow-sm flex justify-between items-start ${
+              alert.severity === 'CRITICAL' ? 'border-red-500' : alert.severity === 'WARNING' ? 'border-yellow-500' : 'border-blue-500'
+            } ${alert.isRead ? 'opacity-60' : ''}`}>
+              <div>
+                <div className="flex items-center space-x-2 mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{new Date(alert.createdAt).toLocaleString()}</span>
+                  {!alert.isRead && <span className="w-2 h-2 bg-red-500 rounded-full"></span>}
+                </div>
+                <h3 className="text-lg font-bold text-slate-800">{alert.title}</h3>
+                <p className="text-sm text-slate-600 mt-1">{alert.description}</p>
+              </div>
+              {!alert.isRead && (
+                <button onClick={() => markReadMutation.mutate(alert.id)} className="text-blue-600 font-bold text-sm hover:underline">Marcar como leída</button>
+              )}
+            </div>
+          ))}
+          {(!alerts || (alerts as any).length === 0) && <p className="text-center py-12 text-slate-400 border-2 border-dashed rounded-2xl">No hay alertas generadas.</p>}
+        </div>
+
+        <div className="lg:col-span-1 space-y-6">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <h2 className="text-lg font-bold text-slate-700 mb-4">Reglas de Alerta</h2>
+            <div className="space-y-3">
+              {(rules as any)?.map((rule: any) => (
+                <div key={rule.id} className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                  <p className="font-bold text-slate-800 text-sm">{rule.metric}</p>
+                  <p className="text-xs text-slate-500">{rule.condition} {rule.threshold} • {rule.severity}</p>
+                </div>
+              ))}
+              {(!rules || (rules as any).length === 0) && <p className="text-xs text-slate-400 italic">No hay reglas configuradas.</p>}
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-red-50 to-orange-50 p-6 rounded-2xl border border-red-100">
+            <h3 className="text-red-800 font-bold mb-2">🤖 Detección de Anomalías</h3>
+            <p className="text-xs text-red-700 leading-relaxed">
+              El sistema analiza automáticamente patrones históricos. Si una métrica se desvía más de 2 desviaciones estándar,
+              se genera una alerta de anomalía automáticamente.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const GrowthAdvisorPage: React.FC = () => {
+  const queryClient = useQueryClient();
+
+  const { data: status } = useQuery({
+    queryKey: ['growthStatus'],
+    queryFn: () => growthService.getStatus(),
+  });
+
+  const diagnoseMutation = useMutation({
+    mutationFn: () => growthService.diagnose(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['growthStatus'] }),
+  });
+
+  const planMutation = useMutation({
+    mutationFn: () => growthService.generatePlan(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['growthStatus'] }),
+  });
+
+  const growthData = status as any;
+
+  const radarData = growthData?.diagnosis ? [
+    { subject: 'Organización', A: growthData.diagnosis.organizationLevel, fullMark: 10 },
+    { subject: 'Tecnología', A: growthData.diagnosis.technologyLevel, fullMark: 10 },
+    { subject: 'Finanzas', A: growthData.diagnosis.financialLevel, fullMark: 10 },
+    { subject: 'Comercial', A: growthData.diagnosis.commercialLevel, fullMark: 10 },
+  ] : [];
+
+  return (
+    <div className="p-6 pb-24">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-slate-800">Asistente de Crecimiento</h1>
+        <div className="flex space-x-3">
+          <button
+            onClick={() => diagnoseMutation.mutate()}
+            disabled={diagnoseMutation.isPending}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-indigo-700"
+          >
+            {diagnoseMutation.isPending ? 'Analizando...' : 'Nuevo Diagnóstico'}
+          </button>
+          <button
+            onClick={() => planMutation.mutate()}
+            disabled={planMutation.isPending || !growthData?.diagnosis}
+            className="bg-green-600 text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-green-700 disabled:opacity-50"
+          >
+            {planMutation.isPending ? 'Trazando Ruta...' : 'Generar Plan de Acción'}
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+          <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center">
+            <span className="mr-2">📊</span> Madurez Empresarial
+          </h2>
+
+          {growthData?.diagnosis ? (
+            <div className="flex flex-col items-center">
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                    <PolarGrid />
+                    <PolarAngleAxis dataKey="subject" tick={{fontSize: 12, fontWeight: 'bold'}} />
+                    <PolarRadiusAxis angle={30} domain={[0, 10]} />
+                    <Radar name="Empresa" dataKey="A" stroke="#4f46e5" fill="#4f46e5" fillOpacity={0.6} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mt-8 grid grid-cols-2 gap-4 w-full">
+                <div className="text-center p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-bold text-slate-400 uppercase">Score Global</p>
+                  <p className="text-4xl font-black text-indigo-600">{growthData.diagnosis.overallScore}/10</p>
+                </div>
+                <div className="text-center p-4 bg-slate-50 rounded-xl flex items-center justify-center">
+                  <p className="text-sm font-bold text-slate-700">Etapa: {growthData.plan?.stage || 'No definida'}</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="h-64 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed rounded-xl">
+              <p>Realiza un diagnóstico para ver tus métricas.</p>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-6">
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+            <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center">
+              <span className="mr-2">🚀</span> Ruta de Crecimiento
+            </h2>
+            {growthData?.plan ? (
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Recomendaciones Estratégicas</h4>
+                  <div className="space-y-3">
+                    {growthData.plan.recommendations.map((rec: string, idx: number) => (
+                      <div key={idx} className="flex items-start space-x-3 p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                        <span className="bg-indigo-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">{idx+1}</span>
+                        <p className="text-sm text-indigo-900 font-medium">{rec}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="pt-6 border-t border-slate-100">
+                  <p className="text-xs font-bold text-slate-400 uppercase mb-2">Impacto Estimado</p>
+                  <p className="text-lg font-bold text-green-600">{growthData.plan.estimatedImpact}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="py-12 text-center text-slate-400">
+                <p>Genera un plan basado en tu madurez actual.</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -6,6 +6,8 @@ import { AppError } from './shared/errors';
 import { ResponseHelper } from './shared/response.helper';
 import { HeartbeatService } from './shared/services/heartbeat.service';
 import { initCoreDb, getCoreDb } from './shared/core-db';
+import { ConfigController } from './shared/infrastructure/config.controller';
+import { validateStartupConfig } from './shared/infrastructure/startup-validator';
 import authRoutes from './modules/auth/infrastructure/auth.routes';
 import memoryRoutes from './modules/memory/infrastructure/memory.routes';
 import agentRoutes from './modules/agents/infrastructure/agent.routes';
@@ -15,7 +17,9 @@ import automationRoutes from './modules/automation/infrastructure/automation.rou
 import communicationRoutes from './modules/communication/infrastructure/communication.routes';
 import { alertRoutes } from './modules/alerts/infrastructure/alert.routes';
 import businessUnderstandingRoutes from './modules/business-understanding/infrastructure/business-understanding.routes';
+import virtualSecretaryRoutes from './modules/virtual-secretary/infrastructure/virtual-secretary.routes';
 import growthAdvisorRoutes from './modules/growth-advisor/infrastructure/growth-advisor.routes';
+import settingsRoutes from './modules/settings/infrastructure/settings.routes';
 
 const app = express();
 
@@ -29,7 +33,7 @@ const startupTime = new Date().toISOString();
 coreDb.collection<{ id: string; key: string; value: any; startedAt: string }>('_system').insertOne({
   id: 'startup',
   key: 'startup',
-  value: { version: '0.2.0', env: config.env },
+  value: { version: '0.2.0', env: config.server.env },
   startedAt: startupTime,
 });
 
@@ -37,10 +41,12 @@ app.get('/health', (req, res) => {
   ResponseHelper.success(res, {
     timestamp: startupTime,
     version: '0.2.0',
-    env: config.env,
+    env: config.server.env,
     coreDb: (coreDb.collection('_system').findById('startup') as any)?.startedAt ?? startupTime,
   }, 'Cerebro Empresarial IA API is healthy');
 });
+
+app.get('/api/config/status', ConfigController.getStatus);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/memory', memoryRoutes);
@@ -51,7 +57,12 @@ app.use('/api/automation', automationRoutes);
 app.use('/api/communication', communicationRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/business-understanding', businessUnderstandingRoutes);
+app.use('/api/virtual-secretary', virtualSecretaryRoutes);
 app.use('/api/growth-advisor', growthAdvisorRoutes);
+app.use('/api/settings', settingsRoutes);
+
+// Validate configuration
+validateStartupConfig();
 
 // Start the Heartbeat system
 const heartbeat = HeartbeatService.getInstance();
@@ -76,14 +87,14 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
   return ResponseHelper.error(
     res,
-    config.env === 'development' ? err.message : 'Internal server error',
+    config.server.env === 'development' ? err.message : 'Internal server error',
     'InternalServerError',
     500
   );
 });
 
-const server = app.listen(config.port, () => {
-  console.log(`[server]: Cerebro Empresarial IA running at http://localhost:${config.port} in ${config.env} mode`);
+const server = app.listen(config.server.port, () => {
+  console.log(`[server]: ${config.server.appName} running at http://localhost:${config.server.port} in ${config.server.env} mode`);
 });
 
 // Graceful shutdown: flush CoreDB + stop heartbeat

@@ -6,8 +6,9 @@ const router = Router();
 
 router.use(authMiddleware);
 
-router.post('/profile', BusinessUnderstandingController.createProfile);
+router.post('/analyze', BusinessUnderstandingController.analyze);
 router.get('/profile', BusinessUnderstandingController.getProfile);
+router.post('/profile', BusinessUnderstandingController.createProfile);
 router.post('/analysis', BusinessUnderstandingController.submitAnalysis);
 router.get('/analysis', BusinessUnderstandingController.getAnalysisHistory);
 

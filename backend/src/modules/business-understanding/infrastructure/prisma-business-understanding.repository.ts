@@ -7,13 +7,17 @@ export class PrismaBusinessUnderstandingRepository implements BusinessUnderstand
   private toProfile(p: any): BusinessProfile {
     return new BusinessProfile({
       id: p.id,
-      companyName: p.companyName,
       industry: p.industry,
       size: p.size,
+      revenueRange: p.revenueRange,
+      productsServices: p.productsServices,
+      processes: p.processes,
+      customerSegments: p.customerSegments,
+      companyName: p.companyName,
       description: p.description,
       mission: p.mission,
       vision: p.vision,
-      values: p.values,
+      values: p.values ?? [],
       userId: p.userId,
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
@@ -37,13 +41,17 @@ export class PrismaBusinessUnderstandingRepository implements BusinessUnderstand
     const p = await prisma.businessProfile.create({
       data: {
         id: profile.id,
-        companyName: profile.companyName,
         industry: profile.industry,
         size: profile.size,
+        revenueRange: profile.revenueRange,
+        productsServices: profile.productsServices,
+        processes: profile.processes,
+        customerSegments: profile.customerSegments,
+        companyName: profile.companyName,
         description: profile.description,
         mission: profile.mission,
         vision: profile.vision,
-        values: profile.values,
+        values: profile.values ?? [],
         userId: profile.userId,
       },
     });
@@ -64,13 +72,17 @@ export class PrismaBusinessUnderstandingRepository implements BusinessUnderstand
     const p = await prisma.businessProfile.update({
       where: { id: profile.id },
       data: {
-        companyName: profile.companyName,
         industry: profile.industry,
         size: profile.size,
+        revenueRange: profile.revenueRange,
+        productsServices: profile.productsServices,
+        processes: profile.processes,
+        customerSegments: profile.customerSegments,
+        companyName: profile.companyName,
         description: profile.description,
         mission: profile.mission,
         vision: profile.vision,
-        values: profile.values,
+        values: profile.values ?? [],
       },
     });
     return this.toProfile(p);

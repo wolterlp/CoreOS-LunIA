@@ -96,10 +96,17 @@ model User {
   messages      Message[]
   conversations Conversation[]
   alerts        Alert[]
-  businessProfiles BusinessProfile[]
   analysisReports  AnalysisReport[]
   recommendations GrowthRecommendation[]
   kpiEntries       KpiEntry[]
+
+  businessProfile BusinessProfile?
+  businessMetrics BusinessMetric[]
+  calendarEvents  CalendarEvent[]
+  reminders       Reminder[]
+  alertRules      AlertRule[]
+  diagnoses       MaturityDiagnosis[]
+  growthPaths     GrowthPath[]
 
   @@map("users")
 }
@@ -291,19 +298,24 @@ model Alert {
   @@map("alerts")
 }
 
+// CAPA 2: MOTOR DE COMPRENSIÓN EMPRESARIAL
 model BusinessProfile {
-  id          String   @id @default(uuid())
-  companyName String
-  industry    String?
-  size        String?
-  description String?
-  mission     String?
-  vision      String?
-  values      String[]
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String   @id @default(uuid())
+  industry         String
+  size             String
+  revenueRange     String
+  productsServices String[]
+  processes        String[]
+  customerSegments String[]
+  companyName      String?
+  description      String?
+  mission          String?
+  vision           String?
+  values           String[]
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   analysisReports AnalysisReport[]
 
@@ -355,4 +367,111 @@ model KpiEntry {
   createdAt  DateTime @default(now())
 
   @@map("kpi_entries")
+}
+
+model BusinessMetric {
+  id        String   @id @default(uuid())
+  name      String
+  value     Float
+  period    String
+  trend     String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("business_metrics")
+}
+
+// SECRETARIA VIRTUAL
+model CalendarEvent {
+  id          String   @id @default(uuid())
+  title       String
+  date        DateTime
+  duration    Int
+  attendees   String[]
+  description String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@map("calendar_events")
+}
+
+model Reminder {
+  id             String   @id @default(uuid())
+  type           String
+  dueDate        DateTime
+  relatedEntity  String?
+  contextMessage String?
+  isCompleted    Boolean  @default(false)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  createdAt      DateTime @default(now())
+
+  @@map("reminders")
+}
+
+// ALERTAS Y ANOMALÍAS
+model AlertRule {
+  id        String   @id @default(uuid())
+  metric    String
+  condition String
+  threshold Float
+  severity  AlertSeverity
+  enabled   Boolean  @default(true)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("alert_rules")
+}
+
+model AnomalyProfile {
+  id            String   @id @default(uuid())
+  metric        String
+  baselineMean  Float
+  baselineStd   Float
+  lastChecked   DateTime @default(now())
+  userId        String
+
+  @@map("anomaly_profiles")
+}
+
+// CRECIMIENTO EMPRESARIAL
+model MaturityDiagnosis {
+  id               String   @id @default(uuid())
+  organizationLevel Int
+  technologyLevel   Int
+  financialLevel    Int
+  commercialLevel   Int
+  overallScore      Int
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  createdAt        DateTime @default(now())
+
+  @@map("maturity_diagnoses")
+}
+
+model GrowthPath {
+  id              String   @id @default(uuid())
+  stage           String
+  recommendations String[]
+  estimatedImpact String?
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  createdAt       DateTime @default(now())
+
+  @@map("growth_paths")
+}
+
+model SystemSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  category    String   @default("GENERAL")
+  description String?
+  isSecret    Boolean  @default(false)
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_settings")
 }

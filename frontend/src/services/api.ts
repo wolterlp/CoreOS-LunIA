@@ -81,12 +81,38 @@ export const alertService = {
   getAlerts: () => api.get('/api/alerts'),
   markAsRead: (id: string) => api.patch(`/api/alerts/${id}/read`),
   deleteAlert: (id: string) => api.delete(`/api/alerts/${id}`),
+  getRules: () => api.get('/api/alerts/rules'),
+  createRule: (data: any) => api.post('/api/alerts/rules', data),
+  triggerCheck: () => api.post('/api/alerts/check'),
+};
+
+export const businessService = {
+  getProfile: () => api.get('/api/business-understanding/profile'),
+  analyze: (connectionId: string) => api.post('/api/business-understanding/analyze', { connectionId }),
+};
+
+export const secretaryService = {
+  getEvents: () => api.get('/api/virtual-secretary/events'),
+  scheduleEvent: (data: any) => api.post('/api/virtual-secretary/events', data),
+  getReminders: () => api.get('/api/virtual-secretary/reminders'),
+  completeReminder: (id: string) => api.patch(`/api/virtual-secretary/reminders/${id}/complete`),
+};
+
+export const growthService = {
+  getStatus: () => api.get('/api/growth-advisor/status'),
+  diagnose: () => api.post('/api/growth-advisor/diagnose'),
+  generatePlan: () => api.post('/api/growth-advisor/plan'),
 };
 
 export const authService = {
   login: (data: any) => api.post('/api/auth/login', data),
   register: (data: any) => api.post('/api/auth/register', data),
   getProfile: () => api.get('/api/auth/profile'),
+};
+
+export const settingsService = {
+  getSettings: () => api.get('/api/settings'),
+  updateSetting: (key: string, value: string) => api.put('/api/settings', { key, value }),
 };
 
 export default api;
